@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS positions (
     unrealized_pnl DECIMAL(20, 8),
     margin_used DECIMAL(20, 8),
     liquidation_price DECIMAL(20, 8),
+    transaction_hash VARCHAR(66), -- Hyperliquid transaction hash (0x + 64 chars)
     opened_at TIMESTAMP NOT NULL,
     closed_at TIMESTAMP,
     close_price DECIMAL(20, 8),

@@ -139,6 +139,36 @@ class HyperliquidAPI:
             "account_value": 0.0
         }
     
+    def get_recent_fill_hash(self, address: str, coin: str, side: str, limit: int = 20) -> Optional[str]:
+        """Get the most recent transaction hash for a position opening."""
+        try:
+            fills = self.get_user_fills(address, limit=limit)
+            
+            # Look for recent fills that opened positions for this coin and side
+            for fill in fills:
+                if (fill.get("coin") == coin and 
+                    fill.get("hash") and 
+                    fill.get("hash") != "0x0000000000000000000000000000000000000000000000000000000000000000"):
+                    
+                    # Check if this fill opened a position in the direction we're looking for
+                    fill_dir = fill.get("dir", "")
+                    
+                    # For LONG positions, look for "Open Long" or buys that increase long position
+                    # For SHORT positions, look for "Open Short" or sells that increase short position
+                    if side == "LONG":
+                        if ("Open Long" in fill_dir or 
+                            (fill.get("side") == "B" and "Close" not in fill_dir)):
+                            return fill.get("hash")
+                    elif side == "SHORT":
+                        if ("Open Short" in fill_dir or 
+                            (fill.get("side") == "A" and "Close" not in fill_dir)):
+                            return fill.get("hash")
+            
+            return None
+        except Exception as e:
+            logger.error(f"Error getting recent fill hash for {address}: {e}")
+            return None
+    
     def get_open_positions(self, address: str) -> List[Dict[str, Any]]:
         """Get current open positions for a trader."""
         try:

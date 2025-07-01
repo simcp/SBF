@@ -148,10 +148,10 @@ class TradingAnalyzer:
         logger.info("get_active_opportunities called")
         try:
             with get_db() as db:
-                # Simplified query - don't join Position since it may be None
+                # Query opportunities with their positions and traders
                 opportunities = db.query(TradeOpportunity).filter_by(
                     status="ACTIVE"
-                ).join(Trader).all()
+                ).join(Trader).outerjoin(Position).all()
                 
                 logger.info(f"Found {len(opportunities)} active opportunities")
                 
@@ -166,7 +166,15 @@ class TradingAnalyzer:
                         "loser_entry_price": float(opp.loser_entry_price),
                         "suggested_entry_price": float(opp.suggested_entry_price) if opp.suggested_entry_price else None,
                         "confidence_score": float(opp.confidence_score),
-                        "created_at": opp.created_at.isoformat()
+                        "transaction_hash": opp.position.transaction_hash if opp.position else None,
+                        "created_at": opp.created_at.isoformat(),
+                        # Position details
+                        "position_size": float(opp.position.size) if opp.position else None,
+                        "position_value": float(opp.position.position_value) if opp.position and opp.position.position_value else None,
+                        "leverage": float(opp.position.leverage) if opp.position and opp.position.leverage else None,
+                        "unrealized_pnl": float(opp.position.unrealized_pnl) if opp.position and opp.position.unrealized_pnl else None,
+                        "opened_at": (opp.position.opened_at.isoformat() if opp.position and opp.position.opened_at 
+                                    else opp.created_at.isoformat())
                     }
                     results.append(result)
                 

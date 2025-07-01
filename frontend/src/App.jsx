@@ -50,13 +50,46 @@ function App() {
   };
 
   const formatAddress = (address) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    return address; // Show full address
+  };
+
+  const getExplorerUrl = (address) => {
+    return `https://app.hyperliquid.xyz/explorer/address/${address}`;
+  };
+
+  const getTradeExplorerUrl = (address, coin, transactionHash) => {
+    // If we have a transaction hash, link to the specific transaction
+    if (transactionHash && transactionHash !== "0x0000000000000000000000000000000000000000000000000000000000000000") {
+      return `https://app.hyperliquid.xyz/explorer/tx/${transactionHash}`;
+    }
+    // Otherwise, fall back to trader address
+    return `https://app.hyperliquid.xyz/explorer/address/${address}`;
   };
 
   const formatCurrency = (amount) => {
     if (amount >= 1000000) return `$${(amount / 1000000).toFixed(1)}M`;
     if (amount >= 1000) return `$${(amount / 1000).toFixed(1)}K`;
     return `$${amount.toFixed(0)}`;
+  };
+
+  const formatSize = (size, coin) => {
+    if (!size) return "";
+    if (size >= 1000000) return `${(size / 1000000).toFixed(1)}M`;
+    if (size >= 1000) return `${(size / 1000).toFixed(1)}K`;
+    return size.toFixed(coin === 'BTC' ? 4 : coin === 'ETH' ? 3 : 1);
+  };
+
+  const getTimeAgo = (timestamp) => {
+    if (!timestamp) return "";
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
   };
 
   if (loading) {
@@ -102,7 +135,14 @@ function App() {
                       <div key={trader.address} className="flex justify-between items-center text-xs md:text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-yellow-400">#{index + 1}</span>
-                          <span>{formatAddress(trader.address)}</span>
+                          <a 
+                            href={getExplorerUrl(trader.address)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-400 hover:text-green-300 underline cursor-pointer"
+                          >
+                            {formatAddress(trader.address)}
+                          </a>
                           <span className="text-red-400">[{formatPnl(trader.roi_30d_percent)}]</span>
                           <span className="text-red-400">📉</span>
                         </div>
@@ -129,16 +169,57 @@ function App() {
                     <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
                       <span className="text-red-400">🚨</span>
                       <span className="text-yellow-400">NEW:</span>
-                      <span>{formatAddress(opp.trader_address)}</span>
+                      <a 
+                        href={getTradeExplorerUrl(opp.trader_address, opp.coin, opp.transaction_hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-green-400 hover:text-green-300 underline cursor-pointer"
+                      >
+                        {formatAddress(opp.trader_address)}
+                      </a>
                       <span>opened</span>
-                      <span className="text-cyan-400">{opp.loser_side}</span>
-                      <span className="text-cyan-400">{opp.coin}</span>
                     </div>
+                    
+                    <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm mt-1">
+                      <a 
+                        href={getTradeExplorerUrl(opp.trader_address, opp.coin, opp.transaction_hash)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan-400 hover:text-cyan-300 underline cursor-pointer"
+                        title={opp.transaction_hash ? `View transaction: ${opp.transaction_hash}` : `View trader: ${opp.trader_address}`}
+                      >
+                        {opp.loser_side} {opp.coin}
+                      </a>
+                      {opp.position_size && (
+                        <>
+                          <span className="text-gray-400">@</span>
+                          <span className="text-white">{formatSize(opp.position_size, opp.coin)}</span>
+                        </>
+                      )}
+                      <span className="text-gray-400">at</span>
+                      <span className="text-white">${opp.loser_entry_price.toFixed(4)}</span>
+                      {opp.leverage && (
+                        <>
+                          <span className="text-gray-400">({opp.leverage}x)</span>
+                        </>
+                      )}
+                      <span className="text-gray-400">•</span>
+                      <span className="text-yellow-400">{getTimeAgo(opp.opened_at)}</span>
+                    </div>
+                    
                     <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm mt-1">
                       <span>→</span>
                       <span className="text-green-400">SUGGESTION:</span>
                       <span className="text-yellow-400 font-bold">{opp.suggested_side} {opp.coin}</span>
                       <span className="text-gray-400">({opp.confidence_score}% confidence)</span>
+                      {opp.unrealized_pnl && (
+                        <>
+                          <span className="text-gray-400">•</span>
+                          <span className={opp.unrealized_pnl >= 0 ? "text-green-400" : "text-red-400"}>
+                            PnL: {formatCurrency(opp.unrealized_pnl)}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -18,6 +18,7 @@ class Position(Base):
     unrealized_pnl = Column(Numeric(20, 8))
     margin_used = Column(Numeric(20, 8))
     liquidation_price = Column(Numeric(20, 8))
+    transaction_hash = Column(String(66))  # Hyperliquid transaction hash (0x + 64 chars)
     opened_at = Column(DateTime, nullable=False)
     closed_at = Column(DateTime)
     close_price = Column(Numeric(20, 8))

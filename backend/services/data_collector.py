@@ -134,6 +134,13 @@ class DataCollector:
                 pos.margin_used = api_pos["margin_used"]
                 pos.updated_at = datetime.utcnow()
             else:
+                # Get transaction hash for new position
+                tx_hash = self.api.get_recent_fill_hash(
+                    trader.address, 
+                    api_pos["coin"], 
+                    api_pos["side"]
+                )
+                
                 # Create new position
                 new_pos = Position(
                     trader_id=trader.id,
@@ -146,6 +153,7 @@ class DataCollector:
                     unrealized_pnl=api_pos["unrealized_pnl"],
                     margin_used=api_pos["margin_used"],
                     liquidation_price=api_pos["liquidation_price"],
+                    transaction_hash=tx_hash,
                     opened_at=datetime.utcnow(),
                     status="OPEN"
                 )
