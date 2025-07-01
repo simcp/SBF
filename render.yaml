@@ -2,7 +2,7 @@ databases:
   - name: hyperliquid-db
     databaseName: hyperliquid_tracker
     user: hyperliquid_user
-    plan: starter
+    plan: free
 
 services:
 
@@ -10,7 +10,7 @@ services:
   - type: web
     name: hyperliquid-api
     env: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 wsgi:app
     envVars:
@@ -34,7 +34,7 @@ services:
   - type: web
     name: hyperliquid-frontend
     env: static
-    plan: starter
+    plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
