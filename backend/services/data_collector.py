@@ -196,7 +196,8 @@ class DataCollector:
                         tp.total_trades
                     FROM traders t
                     JOIN trader_performance tp ON t.id = tp.trader_id
-                    WHERE tp.pnl_percentage < 0
+                    WHERE tp.pnl_percentage < 0 
+                    AND tp.account_value > 10000
                     ORDER BY tp.pnl_percentage ASC
                     LIMIT :limit
                     """),
