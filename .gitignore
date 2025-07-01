@@ -28,7 +28,25 @@ __pycache__/
 env/
 venv/
 .env
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Node
 node_modules/
 npm-debug.log*
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/

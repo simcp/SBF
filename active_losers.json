@@ -1,0 +1,14 @@
+{
+  "traders": [
+    {
+      "address": "0x8e3876940bc8d76fbd93788bbbcd6d16c78f6984",
+      "name": null,
+      "account_value": 2022.349641,
+      "roi_30d_percent": -99.59059148,
+      "pnl_30d": -333737.257389,
+      "volume_30d": 180513773.15586,
+      "positions": [
+        {
+          "coin": "XRP",
+          "side": "LONG",
+          "size": 

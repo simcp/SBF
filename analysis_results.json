@@ -1,0 +1,45 @@
+{
+  "bottom_5_traders": [
+    {
+      "address": "0x66f889094739dbb7d20aa60f645acd88feba75a9",
+      "name": null,
+      "account_value": 0.0,
+      "pnl_30d": -713395.247657,
+      "roi_30d_percent": -100.0,
+      "volume_30d": 87589398.645704
+    },
+    {
+      "address": "0x6e58bdee94a421f967ad93a0c937681e9c75aafc",
+      "name": null,
+      "account_value": 6.269108,
+      "pnl_30d": -29573.343831,
+      "roi_30d_percent": -100.0,
+      "volume_30d": 20749887.1197
+    },
+    {
+      "address": "0xc92b33ff29e9c046ac53f1cfb74e29558ec274e6",
+      "name": null,
+      "account_value": 0.0,
+      "pnl_30d": -191536.725438,
+      "roi_30d_percent": -100.0,
+      "volume_30d": 15751827.12592
+    },
+    {
+      "address": "0xeb6a3e7a834d3e69a4f22e4ac5bf7e3a9dc55755",
+      "name": null,
+      "account_value": 0.0,
+      "pnl_30d": -22171.106926,
+      "roi_30d_percent": -100.0,
+      "volume_30d": 13282965.690001
+    },
+    {
+      "address": "0x118f822cf5901e5c5549c146b0fd7ffdb3d737fe",
+      "name": null,
+      "account_value": 0.0,
+      "pnl_30d": -48855.052331,
+      "roi_30d_percent": -100.0,
+      "volume_30d": 13233056.75653
+    }
+  ],
+  "counter_trade_opportunities": []
+}
