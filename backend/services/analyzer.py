@@ -168,13 +168,20 @@ class TradingAnalyzer:
                         "confidence_score": float(opp.confidence_score),
                         "transaction_hash": opp.position.transaction_hash if opp.position else None,
                         "created_at": opp.created_at.isoformat(),
-                        # Position details
+                        # Raw data
                         "position_size": float(opp.position.size) if opp.position else None,
                         "position_value": float(opp.position.position_value) if opp.position and opp.position.position_value else None,
                         "leverage": float(opp.position.leverage) if opp.position and opp.position.leverage else None,
                         "unrealized_pnl": float(opp.position.unrealized_pnl) if opp.position and opp.position.unrealized_pnl else None,
                         "opened_at": (opp.position.opened_at.isoformat() if opp.position and opp.position.opened_at 
-                                    else opp.created_at.isoformat())
+                                    else opp.created_at.isoformat()),
+                        # Formatted display strings (ready for frontend)
+                        "formatted_size": self._format_size(opp.position.size if opp.position else None, opp.coin),
+                        "formatted_price": f"${float(opp.loser_entry_price):.4f}",
+                        "formatted_leverage": f"{float(opp.position.leverage)}x" if opp.position and opp.position.leverage else None,
+                        "formatted_pnl": self._format_currency(opp.position.unrealized_pnl if opp.position and opp.position.unrealized_pnl else None),
+                        "formatted_time_ago": self._get_time_ago(opp.position.opened_at if opp.position and opp.position.opened_at else opp.created_at),
+                        "explorer_url": self._get_explorer_url(opp.trader.address, opp.position.transaction_hash if opp.position else None)
                     }
                     results.append(result)
                 
@@ -210,6 +217,66 @@ class TradingAnalyzer:
                     
         except Exception as e:
             logger.error(f"Error expiring opportunities: {e}")
+    
+    def _format_size(self, size, coin):
+        """Format position size for display."""
+        if not size:
+            return ""
+        size = float(size)
+        if size >= 1000000:
+            return f"{(size / 1000000):.1f}M"
+        if size >= 1000:
+            return f"{(size / 1000):.1f}K"
+        # Different precision for different coins
+        if coin == 'BTC':
+            return f"{size:.4f}"
+        elif coin == 'ETH':
+            return f"{size:.3f}"
+        else:
+            return f"{size:.1f}"
+    
+    def _format_currency(self, amount):
+        """Format currency amount for display."""
+        if amount is None:
+            return None
+        amount = float(amount)
+        if abs(amount) >= 1000000:
+            return f"${(amount / 1000000):.1f}M"
+        if abs(amount) >= 1000:
+            return f"${(amount / 1000):.1f}K"
+        return f"${amount:.0f}"
+    
+    def _get_time_ago(self, timestamp):
+        """Get formatted time ago string."""
+        if not timestamp:
+            return ""
+        
+        from datetime import datetime
+        if isinstance(timestamp, str):
+            timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+        
+        now = datetime.utcnow()
+        if timestamp.tzinfo:
+            import pytz
+            now = now.replace(tzinfo=pytz.UTC)
+            
+        diff = now - timestamp
+        total_seconds = int(diff.total_seconds())
+        
+        if total_seconds < 60:
+            return f"{total_seconds}s ago"
+        elif total_seconds < 3600:
+            return f"{total_seconds // 60}m ago"
+        elif total_seconds < 86400:
+            return f"{total_seconds // 3600}h ago"
+        else:
+            return f"{total_seconds // 86400}d ago"
+    
+    def _get_explorer_url(self, trader_address, transaction_hash):
+        """Get appropriate Hyperliquid explorer URL."""
+        if transaction_hash and transaction_hash != "0x0000000000000000000000000000000000000000000000000000000000000000":
+            return f"https://app.hyperliquid.xyz/explorer/tx/{transaction_hash}"
+        return f"https://app.hyperliquid.xyz/explorer/address/{trader_address}"
 
 
 # Add missing import

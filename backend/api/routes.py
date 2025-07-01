@@ -27,7 +27,8 @@ def get_services():
     global data_collector, analyzer
     if data_collector is None or analyzer is None:
         try:
-            from backend.services import DataCollector, TradingAnalyzer
+            from backend.services.data_collector import DataCollector
+            from backend.services.analyzer import TradingAnalyzer
             data_collector = DataCollector()
             analyzer = TradingAnalyzer()
         except Exception as e:
@@ -77,6 +78,13 @@ def get_top_losers():
 def get_opportunities():
     """Get current counter-trade opportunities."""
     try:
+        data_collector, analyzer = get_services()
+        if analyzer is None:
+            return jsonify({
+                "status": "error",
+                "message": "Services not available - database might not be configured"
+            }), 503
+        
         opportunities = analyzer.get_active_opportunities()
         return jsonify({
             "status": "success",
