@@ -23,6 +23,22 @@ def create_app():
     def health_check():
         return {"status": "healthy"}, 200
     
+    # Root route
+    @app.route("/")
+    def root():
+        return {
+            "message": "Hyperliquid Counter-Trading API",
+            "version": "1.0.0",
+            "status": "running",
+            "endpoints": {
+                "health": "/health",
+                "api_docs": "/api",
+                "losers": "/api/losers",
+                "traders": "/api/traders",
+                "opportunities": "/api/opportunities"
+            }
+        }, 200
+    
     return app
 
 
