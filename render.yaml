@@ -1,11 +1,4 @@
-databases:
-  - name: hyperliquid-db
-    databaseName: hyperliquid_tracker
-    user: hyperliquid_user
-    plan: free
-
 services:
-
   # Backend API
   - type: web
     name: hyperliquid-api
@@ -19,16 +12,3 @@ services:
         value: production
       - key: FLASK_DEBUG
         value: False
-      - key: API_HOST
-        value: 0.0.0.0
-      - key: DATABASE_URL
-        fromDatabase:
-          name: hyperliquid-db
-          property: connectionString
-
-  # Frontend (disabled for now - deploy backend first)
-  # - type: web
-  #   name: hyperliquid-frontend
-  #   env: static
-  #   buildCommand: cd frontend && npm install && npm run build
-  #   staticPublishPath: frontend/dist
