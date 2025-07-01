@@ -24,18 +24,28 @@ def create_production_app():
     """Create Flask app for production with database initialization."""
     logger.info("Starting Hyperliquid API in production mode")
     
-    # Test database connection
-    if not test_connection():
-        logger.error("Failed to connect to database")
-        raise RuntimeError("Database connection failed")
-    
-    # Initialize database schema
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Database initialization failed: {e}")
-        # Don't fail completely - database might already be initialized
+    # Check if DATABASE_URL is configured
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        logger.warning("No DATABASE_URL configured - running without database")
+    else:
+        logger.info(f"Database URL configured: {database_url[:50]}...")
+        
+        # Test database connection
+        try:
+            if test_connection():
+                logger.info("Database connection successful")
+                # Initialize database schema
+                try:
+                    init_db()
+                    logger.info("Database initialized successfully")
+                except Exception as e:
+                    logger.warning(f"Database initialization failed: {e}")
+                    # Don't fail completely - database might already be initialized
+            else:
+                logger.warning("Database connection failed - continuing without database")
+        except Exception as e:
+            logger.warning(f"Database setup error: {e} - continuing without database")
     
     # Create Flask app
     app = create_app()
@@ -44,7 +54,22 @@ def create_production_app():
     return app
 
 # Create the WSGI application
-app = create_production_app()
+try:
+    app = create_production_app()
+    logger.info("WSGI application created successfully")
+except Exception as e:
+    logger.error(f"Failed to create WSGI application: {e}")
+    # Create a minimal app that shows the error
+    from flask import Flask
+    app = Flask(__name__)
+    
+    @app.route("/")
+    def error_page():
+        return f"Application startup failed: {str(e)}", 500
+    
+    @app.route("/health")
+    def health():
+        return {"status": "error", "message": str(e)}, 500
 
 if __name__ == "__main__":
     # For local testing
