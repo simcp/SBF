@@ -1,16 +1,39 @@
 import logging
 from flask import Blueprint, jsonify, request
-from backend.services import DataCollector, TradingAnalyzer
-from backend.database.connection import get_db
-from backend.models import Trader, TraderPerformance, Position, TradeOpportunity
 
 logger = logging.getLogger(__name__)
 
 api_bp = Blueprint("api", __name__)
 
-# Initialize services
-data_collector = DataCollector()
-analyzer = TradingAnalyzer()
+@api_bp.route("/", methods=["GET"])
+def api_info():
+    """API information endpoint."""
+    return jsonify({
+        "message": "Hyperliquid Counter-Trading API",
+        "version": "1.0.0",
+        "endpoints": {
+            "losers": "/api/losers - Get top losing traders",
+            "traders": "/api/traders - Get trader information", 
+            "opportunities": "/api/opportunities - Get trading opportunities"
+        }
+    }), 200
+
+# Initialize services lazily to avoid startup issues
+data_collector = None
+analyzer = None
+
+def get_services():
+    """Lazy initialization of services."""
+    global data_collector, analyzer
+    if data_collector is None or analyzer is None:
+        try:
+            from backend.services import DataCollector, TradingAnalyzer
+            data_collector = DataCollector()
+            analyzer = TradingAnalyzer()
+        except Exception as e:
+            logger.error(f"Failed to initialize services: {e}")
+            return None, None
+    return data_collector, analyzer
 
 
 @api_bp.route("/losers", methods=["GET"])
@@ -18,6 +41,13 @@ def get_top_losers():
     """Get top losing traders."""
     logger.info("GET /api/losers endpoint called")
     try:
+        data_collector, analyzer = get_services()
+        if data_collector is None:
+            return jsonify({
+                "status": "error",
+                "message": "Services not available - database might not be configured"
+            }), 503
+            
         limit = request.args.get("limit", 500, type=int)
         logger.info(f"Requesting {limit} losers from data_collector")
         
