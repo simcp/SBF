@@ -1,0 +1,48 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: hyperliquid-db
+    env: python
+    plan: starter
+    databases:
+      - name: hyperliquid_tracker
+        user: hyperliquid_user
+
+  # Backend API
+  - type: web
+    name: hyperliquid-api
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --timeout 120 backend.app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: False
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: API_PORT
+        fromService:
+          type: web
+          name: hyperliquid-api
+          property: port
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hyperliquid_tracker
+          property: connectionString
+
+  # Frontend
+  - type: web
+    name: hyperliquid-frontend
+    env: static
+    plan: starter
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://hyperliquid-api.onrender.com/api  # You'll update this with your actual API URL
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
