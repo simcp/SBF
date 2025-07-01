@@ -14,8 +14,10 @@ def create_app():
     """Create and configure Flask app."""
     app = Flask(__name__)
     
-    # Enable CORS
-    CORS(app)
+    # Enable CORS with proper headers for CSP
+    CORS(app, origins=["http://localhost:5174", "http://localhost:5173"], 
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
     
     # Register blueprints
     app.register_blueprint(api_bp, url_prefix="/api")

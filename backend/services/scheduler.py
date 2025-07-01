@@ -118,7 +118,8 @@ class DataScheduler:
             logger.info("Updating existing trader positions...")
             
             # Get active traders from database
-            with self.data_collector.get_db() as db:
+            from backend.database.connection import get_db
+            with get_db() as db:
                 from backend.models.trader import Trader
                 active_traders = db.query(Trader).filter_by(is_active=True).limit(20).all()
                 

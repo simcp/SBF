@@ -4,6 +4,8 @@ import { cn } from './lib/utils';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
+console.log('App component loaded with API_BASE:', API_BASE);
+
 function App() {
   const [losers, setLosers] = useState([]);
   const [opportunities, setOpportunities] = useState([]);
@@ -18,20 +20,27 @@ function App() {
 
   const fetchData = async () => {
     try {
-      console.log('Fetching data from API...');
+      console.log('Fetching data from API:', API_BASE);
+      console.log('API_BASE value:', API_BASE);
+      
       const [losersRes, oppsRes] = await Promise.all([
         axios.get(`${API_BASE}/losers`),
         axios.get(`${API_BASE}/opportunities`)
       ]);
       
-      console.log('Losers response:', losersRes.data);
-      console.log('Opportunities response:', oppsRes.data);
+      console.log('Losers response status:', losersRes.status);
+      console.log('Losers response data:', losersRes.data);
+      console.log('Opportunities response status:', oppsRes.status);
+      console.log('Opportunities response data:', oppsRes.data);
       
-      const losersData = losersRes.data.data || losersRes.data; // Handle both data formats
-      const oppsData = oppsRes.data.data || oppsRes.data;
+      // Extract data array from response
+      const losersData = Array.isArray(losersRes.data.data) ? losersRes.data.data : [];
+      const oppsData = Array.isArray(oppsRes.data.data) ? oppsRes.data.data : [];
       
-      console.log('Setting losers:', losersData.slice(0, 10));
-      console.log('Setting opportunities:', oppsData.slice(0, 5));
+      console.log('Processed losers count:', losersData.length);
+      console.log('Processed opportunities count:', oppsData.length);
+      console.log('First loser:', losersData[0]);
+      console.log('First opportunity:', oppsData[0]);
       
       setLosers(losersData.slice(0, 10)); // Top 10 losers
       setOpportunities(oppsData.slice(0, 5)); // Top 5 opportunities
@@ -39,6 +48,7 @@ function App() {
       setLoading(false);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      console.error('Error details:', error.response?.data || error.message);
       setConnected(false);
       setLoading(false);
     }
