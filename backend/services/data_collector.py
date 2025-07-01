@@ -209,14 +209,21 @@ class DataCollector:
                 row_count = 0
                 for row in query:
                     row_count += 1
+                    pnl_percent = float(row[2]) if row[2] else 0
+                    account_value = float(row[4]) if row[4] else 0
+                    
                     result = {
                         "id": row[0],
                         "address": row[1],
-                        "roi_30d_percent": float(row[2]) if row[2] else 0,
+                        "roi_30d_percent": pnl_percent,
                         "pnl_30d": float(row[3]) if row[3] else 0,
-                        "account_value": float(row[4]) if row[4] else 0,
+                        "account_value": account_value,
                         "win_rate": float(row[5]) if row[5] else 0,
-                        "total_trades": row[6] or 0
+                        "total_trades": row[6] or 0,
+                        # Formatted display strings (ready for frontend)
+                        "formatted_pnl": f"{pnl_percent:.2f}%" if pnl_percent < 0 else f"+{pnl_percent:.2f}%",
+                        "formatted_account_value": self._format_currency(account_value),
+                        "explorer_url": f"https://app.hyperliquid.xyz/explorer/address/{row[1]}"
                     }
                     results.append(result)
                 
@@ -228,6 +235,17 @@ class DataCollector:
         except Exception as e:
             logger.error(f"Error getting top losers: {e}", exc_info=True)
             return []
+    
+    def _format_currency(self, amount):
+        """Format currency amount for display."""
+        if amount is None:
+            return "$0"
+        amount = float(amount)
+        if abs(amount) >= 1000000:
+            return f"${(amount / 1000000):.1f}M"
+        if abs(amount) >= 1000:
+            return f"${(amount / 1000):.1f}K"
+        return f"${amount:.0f}"
     
     def discover_traders_from_leaderboard(self) -> List[str]:
         """Discover trader addresses from various sources."""

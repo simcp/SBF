@@ -116,18 +116,18 @@ function App() {
                         <div className="flex items-center gap-2">
                           <span className="text-yellow-400">#{index + 1}</span>
                           <a 
-                            href={getExplorerUrl(trader.address)}
+                            href={trader.explorer_url || getExplorerUrl(trader.address)}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-green-400 hover:text-green-300 underline cursor-pointer"
                           >
                             {formatAddress(trader.address)}
                           </a>
-                          <span className="text-red-400">[{formatPnl(trader.roi_30d_percent)}]</span>
+                          <span className="text-red-400">[{trader.formatted_pnl || formatPnl(trader.roi_30d_percent)}]</span>
                           <span className="text-red-400">📉</span>
                         </div>
                         <div className="text-xs md:text-sm text-gray-400">
-                          {formatCurrency(trader.account_value)}
+                          {trader.formatted_account_value || formatCurrency(trader.account_value)}
                         </div>
                       </div>
                     );
