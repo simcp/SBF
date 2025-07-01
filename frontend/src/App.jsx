@@ -68,7 +68,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-green-400 font-mono p-4">
+    <div className="min-h-screen bg-black text-green-400 font-mono p-2 md:p-4">
       {/* Header */}
       <div className="border border-green-400 mb-4">
         <div className="flex justify-between items-center p-2 bg-green-400 text-black">
@@ -83,14 +83,14 @@ function App() {
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-2 md:p-4">
           {/* Worst Traders */}
           <div>
-            <div className="border border-green-400 h-96">
+            <div className="border border-green-400 h-64 md:h-96">
               <div className="bg-green-400 text-black p-2 font-bold">
                 WORST TRADERS ▼ 30d PnL
               </div>
-              <div className="p-2 space-y-1 overflow-y-auto h-80">
+              <div className="p-2 space-y-1 overflow-y-auto h-48 md:h-80">
                 {losers.length === 0 ? (
                   <div className="text-gray-400 text-center py-8">
                     Loading traders... (Debug: {losers.length} items)
@@ -99,14 +99,14 @@ function App() {
                   losers.map((trader, index) => {
                     console.log('Rendering trader:', trader);
                     return (
-                      <div key={trader.address} className="flex justify-between items-center text-sm">
+                      <div key={trader.address} className="flex justify-between items-center text-xs md:text-sm">
                         <div className="flex items-center gap-2">
                           <span className="text-yellow-400">#{index + 1}</span>
                           <span>{formatAddress(trader.address)}</span>
                           <span className="text-red-400">[{formatPnl(trader.roi_30d_percent)}]</span>
                           <span className="text-red-400">📉</span>
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs md:text-sm text-gray-400">
                           {formatCurrency(trader.account_value)}
                         </div>
                       </div>
@@ -119,14 +119,14 @@ function App() {
 
           {/* Opportunities */}
           <div>
-            <div className="border border-green-400 h-96">
+            <div className="border border-green-400 h-64 md:h-96">
               <div className="bg-green-400 text-black p-2 font-bold">
                 OPPORTUNITIES
               </div>
-              <div className="p-2 space-y-2 overflow-y-auto h-80">
+              <div className="p-2 space-y-2 overflow-y-auto h-48 md:h-80">
                 {opportunities.map((opp, index) => (
                   <div key={index} className="border border-yellow-400 p-2">
-                    <div className="flex items-center gap-2 text-sm">
+                    <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
                       <span className="text-red-400">🚨</span>
                       <span className="text-yellow-400">NEW:</span>
                       <span>{formatAddress(opp.trader_address)}</span>
@@ -134,7 +134,7 @@ function App() {
                       <span className="text-cyan-400">{opp.loser_side}</span>
                       <span className="text-cyan-400">{opp.coin}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm mt-1">
+                    <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm mt-1">
                       <span>→</span>
                       <span className="text-green-400">SUGGESTION:</span>
                       <span className="text-yellow-400 font-bold">{opp.suggested_side} {opp.coin}</span>
@@ -154,7 +154,7 @@ function App() {
         </div>
 
         {/* Status Bar */}
-        <div className="border-t border-green-400 p-2 text-xs flex justify-between">
+        <div className="border-t border-green-400 p-2 text-xs flex flex-col md:flex-row justify-between gap-2 md:gap-0">
           <div>
             Active Losers: {losers.length} | 
             Opportunities: {opportunities.length} |
