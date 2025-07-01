@@ -1,5 +1,6 @@
 import logging
 from flask import Blueprint, jsonify, request
+from backend.services.scheduler import get_scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -278,6 +279,72 @@ def analyze_positions():
         
     except Exception as e:
         logger.error(f"Error analyzing positions: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@api_bp.route("/scheduler/status", methods=["GET"])
+def get_scheduler_status():
+    """Get real-time data collection scheduler status."""
+    try:
+        scheduler = get_scheduler()
+        status = scheduler.get_status()
+        return jsonify({
+            "status": "success",
+            "data": status
+        }), 200
+    except Exception as e:
+        logger.error(f"Error getting scheduler status: {e}")
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+
+@api_bp.route("/scheduler/start", methods=["POST"])
+def start_scheduler_endpoint():
+    """Manually start the data collection scheduler."""
+    try:
+        scheduler = get_scheduler()
+        if scheduler.running:
+            return jsonify({
+                "status": "success",
+                "message": "Scheduler is already running"
+            }), 200
+        
+        scheduler.start()
+        return jsonify({
+            "status": "success",
+            "message": "Data collection scheduler started"
+        }), 200
+    except Exception as e:
+        logger.error(f"Error starting scheduler: {e}")
+        return jsonify({
+            "status": "error", 
+            "message": str(e)
+        }), 500
+
+
+@api_bp.route("/scheduler/stop", methods=["POST"])
+def stop_scheduler_endpoint():
+    """Manually stop the data collection scheduler."""
+    try:
+        scheduler = get_scheduler()
+        if not scheduler.running:
+            return jsonify({
+                "status": "success",
+                "message": "Scheduler is already stopped"
+            }), 200
+        
+        scheduler.stop()
+        return jsonify({
+            "status": "success",
+            "message": "Data collection scheduler stopped"
+        }), 200
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
         return jsonify({
             "status": "error",
             "message": str(e)
