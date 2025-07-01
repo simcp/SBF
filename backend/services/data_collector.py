@@ -162,42 +162,63 @@ class DataCollector:
     
     def get_top_losers(self, limit: int = 500) -> List[Dict[str, Any]]:
         """Get top losing traders based on 30-day performance."""
+        logger.info(f"get_top_losers called with limit={limit}")
         try:
             with get_db() as db:
-                # Query using the view we created
+                logger.info("Database connection established")
+                
+                # First, let's check if we have any traders at all
+                trader_count = db.query(Trader).count()
+                perf_count = db.query(TraderPerformance).count()
+                logger.info(f"Database has {trader_count} traders and {perf_count} performance records")
+                
+                # Query traders and their performance directly using SQLAlchemy ORM
+                from sqlalchemy import text
+                logger.info("Executing SQL query for top losers")
+                
                 query = db.execute(
-                    """
+                    text("""
                     SELECT 
                         t.id,
                         t.address,
-                        v.avg_pnl_percentage,
-                        v.total_pnl,
-                        v.avg_win_rate,
-                        v.total_trades,
-                        v.loss_rank
-                    FROM v_top_losers v
-                    JOIN traders t ON t.id = v.id
+                        tp.pnl_percentage,
+                        tp.pnl_absolute,
+                        tp.account_value,
+                        tp.win_rate,
+                        tp.total_trades
+                    FROM traders t
+                    JOIN trader_performance tp ON t.id = tp.trader_id
+                    WHERE tp.pnl_percentage < 0
+                    ORDER BY tp.pnl_percentage ASC
                     LIMIT :limit
-                    """,
+                    """),
                     {"limit": limit}
                 )
                 
+                logger.info("SQL query executed successfully")
+                
                 results = []
+                row_count = 0
                 for row in query:
-                    results.append({
+                    row_count += 1
+                    result = {
                         "id": row[0],
                         "address": row[1],
-                        "pnl_percentage": float(row[2]) if row[2] else 0,
-                        "total_pnl": float(row[3]) if row[3] else 0,
-                        "win_rate": float(row[4]) if row[4] else 0,
-                        "total_trades": row[5] or 0,
-                        "rank": row[6]
-                    })
+                        "roi_30d_percent": float(row[2]) if row[2] else 0,
+                        "pnl_30d": float(row[3]) if row[3] else 0,
+                        "account_value": float(row[4]) if row[4] else 0,
+                        "win_rate": float(row[5]) if row[5] else 0,
+                        "total_trades": row[6] or 0
+                    }
+                    results.append(result)
+                
+                logger.info(f"Processed {row_count} rows, returning {len(results)} results")
+                logger.info(f"First result: {results[0] if results else 'No results'}")
                 
                 return results
                 
         except Exception as e:
-            logger.error(f"Error getting top losers: {e}")
+            logger.error(f"Error getting top losers: {e}", exc_info=True)
             return []
     
     def discover_traders_from_leaderboard(self) -> List[str]:

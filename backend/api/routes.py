@@ -16,16 +16,27 @@ analyzer = TradingAnalyzer()
 @api_bp.route("/losers", methods=["GET"])
 def get_top_losers():
     """Get top losing traders."""
+    logger.info("GET /api/losers endpoint called")
     try:
         limit = request.args.get("limit", 500, type=int)
+        logger.info(f"Requesting {limit} losers from data_collector")
+        
         losers = data_collector.get_top_losers(limit=limit)
-        return jsonify({
+        
+        logger.info(f"data_collector returned {len(losers)} losers")
+        logger.info(f"Sample data: {losers[:2] if losers else 'No data'}")
+        
+        response = {
             "status": "success",
             "data": losers,
             "count": len(losers)
-        }), 200
+        }
+        
+        logger.info(f"Returning response with {len(losers)} items")
+        return jsonify(response), 200
+        
     except Exception as e:
-        logger.error(f"Error getting top losers: {e}")
+        logger.error(f"Error in /api/losers endpoint: {e}", exc_info=True)
         return jsonify({
             "status": "error",
             "message": str(e)

@@ -145,15 +145,19 @@ class TradingAnalyzer:
     
     def get_active_opportunities(self) -> List[Dict[str, Any]]:
         """Get all active trading opportunities."""
+        logger.info("get_active_opportunities called")
         try:
             with get_db() as db:
+                # Simplified query - don't join Position since it may be None
                 opportunities = db.query(TradeOpportunity).filter_by(
                     status="ACTIVE"
-                ).join(Position).join(Trader).all()
+                ).join(Trader).all()
+                
+                logger.info(f"Found {len(opportunities)} active opportunities")
                 
                 results = []
                 for opp in opportunities:
-                    results.append({
+                    result = {
                         "id": opp.id,
                         "trader_address": opp.trader.address,
                         "coin": opp.coin,
@@ -163,12 +167,16 @@ class TradingAnalyzer:
                         "suggested_entry_price": float(opp.suggested_entry_price) if opp.suggested_entry_price else None,
                         "confidence_score": float(opp.confidence_score),
                         "created_at": opp.created_at.isoformat()
-                    })
+                    }
+                    results.append(result)
+                
+                logger.info(f"Returning {len(results)} opportunities")
+                logger.info(f"First opportunity: {results[0] if results else 'None'}")
                 
                 return results
                 
         except Exception as e:
-            logger.error(f"Error getting active opportunities: {e}")
+            logger.error(f"Error getting active opportunities: {e}", exc_info=True)
             return []
     
     def expire_old_opportunities(self, hours: int = 24):

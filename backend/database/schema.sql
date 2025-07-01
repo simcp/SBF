@@ -1,5 +1,4 @@
--- Create database if not exists
--- CREATE DATABASE hyperliquid_tracker;
+-- Database already created via createdb command
 
 -- Traders table to store basic trader information
 CREATE TABLE IF NOT EXISTS traders (
@@ -96,12 +95,12 @@ CREATE TABLE IF NOT EXISTS api_logs (
 );
 
 -- Indexes for performance
-CREATE INDEX idx_traders_address ON traders(address);
-CREATE INDEX idx_trader_performance_trader_id_date ON trader_performance(trader_id, date);
-CREATE INDEX idx_positions_trader_id_status ON positions(trader_id, status);
-CREATE INDEX idx_positions_opened_at ON positions(opened_at);
-CREATE INDEX idx_trade_opportunities_status ON trade_opportunities(status);
-CREATE INDEX idx_api_logs_created_at ON api_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_traders_address ON traders(address);
+CREATE INDEX IF NOT EXISTS idx_trader_performance_trader_id_date ON trader_performance(trader_id, date);
+CREATE INDEX IF NOT EXISTS idx_positions_trader_id_status ON positions(trader_id, status);
+CREATE INDEX IF NOT EXISTS idx_positions_opened_at ON positions(opened_at);
+CREATE INDEX IF NOT EXISTS idx_trade_opportunities_status ON trade_opportunities(status);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at);
 
 -- Views for easier querying
 CREATE OR REPLACE VIEW v_trader_30d_performance AS
