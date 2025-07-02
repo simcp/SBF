@@ -35,3 +35,4 @@ databases:
   - name: hyperliquid-db
     databaseName: hyperliquid_tracker
     user: hyperliquid_user
+    plan: free
