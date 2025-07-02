@@ -113,35 +113,55 @@ function App() {
               <div className="bg-green-400 text-black p-2 font-bold">
                 WORST TRADERS ▼ 30d PnL
               </div>
-              <div className="p-2 space-y-1 overflow-y-auto h-48 md:h-80">
+              <div className="overflow-y-auto h-48 md:h-80">
                 {losers.length === 0 ? (
                   <div className="text-gray-400 text-center py-8">
                     Loading traders... (Debug: {losers.length} items)
                   </div>
                 ) : (
-                  losers.map((trader, index) => {
-                    console.log('Rendering trader:', trader);
-                    return (
-                      <div key={trader.address} className="flex justify-between items-center text-xs md:text-sm">
-                        <div className="flex items-center gap-2">
-                          <span className="text-yellow-400">#{index + 1}</span>
-                          <a 
-                            href={trader.explorer_url || getExplorerUrl(trader.address)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-400 hover:text-green-300 underline cursor-pointer"
-                          >
-                            {formatAddress(trader.address)}
-                          </a>
-                          <span className="text-red-400">[{trader.formatted_pnl || formatPnl(trader.roi_30d_percent)}]</span>
-                          <span className="text-red-400">📉</span>
-                        </div>
-                        <div className="text-xs md:text-sm text-gray-400">
-                          {trader.formatted_account_value || formatCurrency(trader.account_value)}
-                        </div>
-                      </div>
-                    );
-                  })
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-900 sticky top-0">
+                      <tr className="text-green-400">
+                        <th className="text-left p-1">Address</th>
+                        <th className="text-right p-1">Account Balance</th>
+                        <th className="text-right p-1">30d PnL</th>
+                        <th className="text-right p-1">7d PnL</th>
+                        <th className="text-right p-1">Last Active</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {losers.map((trader, index) => {
+                        console.log('Rendering trader:', trader);
+                        return (
+                          <tr key={trader.address} className="border-b border-gray-800 hover:bg-gray-900">
+                            <td className="p-1">
+                              <a 
+                                href={trader.explorer_url || getExplorerUrl(trader.address)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-green-400 hover:text-green-300 underline cursor-pointer"
+                                title={trader.address}
+                              >
+                                {trader.address.slice(0, 8)}...{trader.address.slice(-6)}
+                              </a>
+                            </td>
+                            <td className="text-right p-1 text-white font-bold">
+                              {trader.formatted_account_value || formatCurrency(trader.account_value)}
+                            </td>
+                            <td className="text-right p-1 text-red-400 font-bold">
+                              {trader.formatted_pnl || formatPnl(trader.roi_30d_percent)}
+                            </td>
+                            <td className="text-right p-1 text-red-300">
+                              {trader.formatted_pnl_7d || "N/A"}
+                            </td>
+                            <td className="text-right p-1 text-gray-400">
+                              {trader.formatted_last_active || "Unknown"}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 )}
               </div>
             </div>

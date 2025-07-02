@@ -61,8 +61,17 @@ class DataCollector:
     
     def _update_trader_performance(self, db: Session, trader: Trader):
         """Update trader's performance metrics."""
-        # Calculate performance for last 30 days
-        performance = self.api.calculate_trader_performance(trader.address, days=30)
+        # Calculate performance from our position data
+        performance = self._calculate_performance_from_positions(db, trader)
+        
+        # Also get account value from API
+        try:
+            user_state = self.api.get_user_state(trader.address)
+            account_value = float(user_state.get("marginSummary", {}).get("accountValue", 0)) if user_state else 0
+            performance["account_value"] = account_value
+        except Exception as e:
+            logger.warning(f"Could not get account value for {trader.address}: {e}")
+            performance["account_value"] = 0
         
         # Check if we already have today's performance record
         today = date.today()
@@ -193,7 +202,9 @@ class DataCollector:
                         tp.pnl_absolute,
                         tp.account_value,
                         tp.win_rate,
-                        tp.total_trades
+                        tp.total_trades,
+                        tp.avg_loss,
+                        t.last_updated
                     FROM traders t
                     JOIN trader_performance tp ON t.id = tp.trader_id
                     WHERE tp.pnl_percentage < 0 
@@ -213,6 +224,12 @@ class DataCollector:
                     pnl_percent = float(row[2]) if row[2] else 0
                     account_value = float(row[4]) if row[4] else 0
                     
+                    avg_loss = float(row[7]) if row[7] else 0
+                    last_updated = row[8]
+                    
+                    # Calculate 7d PnL
+                    pnl_7d_percent = self._calculate_7d_pnl(row[1])  # Pass address
+                    
                     result = {
                         "id": row[0],
                         "address": row[1],
@@ -221,9 +238,16 @@ class DataCollector:
                         "account_value": account_value,
                         "win_rate": float(row[5]) if row[5] else 0,
                         "total_trades": row[6] or 0,
+                        "avg_loss": avg_loss,
+                        "last_updated": last_updated,
+                        "roi_7d_percent": pnl_7d_percent,
                         # Formatted display strings (ready for frontend)
                         "formatted_pnl": f"{pnl_percent:.2f}%" if pnl_percent < 0 else f"+{pnl_percent:.2f}%",
+                        "formatted_pnl_7d": f"{pnl_7d_percent:.2f}%" if pnl_7d_percent != 0 else "N/A",
                         "formatted_account_value": self._format_currency(account_value),
+                        "formatted_win_rate": f"{float(row[5]):.1f}%" if row[5] else "0.0%",
+                        "formatted_avg_loss": self._format_currency(abs(avg_loss)) if avg_loss else "$0",
+                        "formatted_last_active": self._format_time_ago(last_updated) if last_updated else "Unknown",
                         "explorer_url": f"https://app.hyperliquid.xyz/explorer/address/{row[1]}"
                     }
                     results.append(result)
@@ -248,6 +272,105 @@ class DataCollector:
             return f"${(amount / 1000):.1f}K"
         return f"${amount:.0f}"
     
+    def _format_time_ago(self, timestamp):
+        """Format timestamp as time ago."""
+        if not timestamp:
+            return "Unknown"
+        
+        try:
+            from datetime import datetime
+            if isinstance(timestamp, str):
+                timestamp = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+            
+            now = datetime.utcnow()
+            diff = now - timestamp.replace(tzinfo=None)
+            
+            if diff.days > 0:
+                return f"{diff.days}d ago"
+            elif diff.seconds > 3600:
+                hours = diff.seconds // 3600
+                return f"{hours}h ago"
+            elif diff.seconds > 60:
+                minutes = diff.seconds // 60
+                return f"{minutes}m ago"
+            else:
+                return "Just now"
+        except Exception:
+            return "Unknown"
+    
+    def _calculate_7d_pnl(self, address: str) -> float:
+        """Calculate 7-day PnL percentage using Hyperliquid API."""
+        try:
+            performance = self.api.calculate_trader_performance(address, days=7)
+            return performance.get("pnl_percentage", 0)
+        except Exception as e:
+            logger.debug(f"Could not calculate 7d PnL for {address}: {e}")
+            return 0
+    
+    def _calculate_performance_from_positions(self, db: Session, trader: Trader) -> Dict[str, Any]:
+        """Calculate performance metrics from position data."""
+        from datetime import datetime, timedelta
+        
+        # Get positions from last 30 days
+        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        positions = db.query(Position).filter(
+            Position.trader_id == trader.id,
+            Position.opened_at >= cutoff_date
+        ).all()
+        
+        if not positions:
+            return self._empty_performance_dict()
+        
+        # Calculate metrics
+        total_positions = len(positions)
+        closed_positions = [p for p in positions if p.status == "CLOSED" and p.realized_pnl is not None]
+        
+        # If no closed positions, use unrealized PnL from open positions
+        if not closed_positions:
+            # Use current unrealized PnL for open positions
+            total_pnl = sum(float(p.unrealized_pnl or 0) for p in positions)
+            winning_positions = [p for p in positions if (p.unrealized_pnl or 0) > 0]
+            losing_positions = [p for p in positions if (p.unrealized_pnl or 0) < 0]
+            
+            win_rate = (len(winning_positions) / total_positions * 100) if total_positions > 0 else 0
+            avg_win = sum(float(p.unrealized_pnl or 0) for p in winning_positions) / len(winning_positions) if winning_positions else 0
+            avg_loss = sum(float(p.unrealized_pnl or 0) for p in losing_positions) / len(losing_positions) if losing_positions else 0
+        else:
+            # Use realized PnL for closed positions
+            total_pnl = sum(float(p.realized_pnl or 0) for p in closed_positions)
+            winning_positions = [p for p in closed_positions if (p.realized_pnl or 0) > 0]
+            losing_positions = [p for p in closed_positions if (p.realized_pnl or 0) < 0]
+            
+            win_rate = (len(winning_positions) / len(closed_positions) * 100) if closed_positions else 0
+            avg_win = sum(float(p.realized_pnl or 0) for p in winning_positions) / len(winning_positions) if winning_positions else 0
+            avg_loss = sum(float(p.realized_pnl or 0) for p in losing_positions) / len(losing_positions) if losing_positions else 0
+        
+        return {
+            "pnl_absolute": total_pnl,
+            "pnl_percentage": 0,  # Will be calculated with account value
+            "win_rate": win_rate,
+            "total_trades": total_positions,
+            "winning_trades": len(winning_positions),
+            "losing_trades": len(losing_positions),
+            "avg_win": avg_win,
+            "avg_loss": avg_loss,
+            "account_value": 0  # Will be set from API
+        }
+    
+    def _empty_performance_dict(self) -> Dict[str, Any]:
+        """Return empty performance metrics."""
+        return {
+            "pnl_absolute": 0,
+            "pnl_percentage": 0,
+            "win_rate": 0,
+            "total_trades": 0,
+            "winning_trades": 0,
+            "losing_trades": 0,
+            "avg_win": 0,
+            "avg_loss": 0,
+            "account_value": 0
+        }
+
     def discover_traders_from_leaderboard(self) -> List[str]:
         """Discover trader addresses from various sources."""
         # TODO: Implement leaderboard scraping or API calls
