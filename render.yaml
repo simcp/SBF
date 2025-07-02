@@ -3,7 +3,6 @@ services:
   - type: web
     name: hyperliquid-backend
     env: python
-    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python backend/app.py
     envVars:
@@ -26,7 +25,6 @@ services:
   - type: web
     name: hyperliquid-frontend
     env: static
-    plan: free
     buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: frontend/dist
     envVars:
@@ -37,4 +35,3 @@ databases:
   - name: hyperliquid-db
     databaseName: hyperliquid_tracker
     user: hyperliquid_user
-    plan: free
