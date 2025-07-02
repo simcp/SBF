@@ -12,6 +12,13 @@ load_dotenv()
 # Database URL
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/hyperliquid_tracker")
 
+# Add SSL parameters for Render.com PostgreSQL
+if 'render.com' in DATABASE_URL:
+    if '?' in DATABASE_URL:
+        DATABASE_URL += '&sslmode=require'
+    else:
+        DATABASE_URL += '?sslmode=require'
+
 # Create engine
 engine = create_engine(
     DATABASE_URL,

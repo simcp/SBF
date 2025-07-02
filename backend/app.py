@@ -1,5 +1,6 @@
 import logging
 import atexit
+import os
 from flask import Flask
 from flask_cors import CORS
 from backend.api.routes import api_bp
@@ -74,8 +75,13 @@ def main():
     
     # Create and run app
     app = create_app()
-    logger.info(f"Starting Flask API on {API_HOST}:{API_PORT}")
-    app.run(host=API_HOST, port=API_PORT, debug=DEBUG)
+    
+    # Get port from environment (Render sets PORT, fallback to API_PORT then 10000)
+    port = int(os.getenv('PORT', os.getenv('API_PORT', 10000)))
+    host = os.getenv('API_HOST', '0.0.0.0')
+    
+    logger.info(f"Starting Flask API on {host}:{port}")
+    app.run(host=host, port=port, debug=DEBUG)
 
 
 if __name__ == "__main__":
