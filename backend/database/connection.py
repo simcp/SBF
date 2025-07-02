@@ -12,19 +12,25 @@ load_dotenv()
 # Database URL
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/hyperliquid_tracker")
 
-# Add SSL parameters for Render.com PostgreSQL
+# Create engine with SSL parameters for Render.com
 if 'render.com' in DATABASE_URL:
-    if '?' in DATABASE_URL:
-        DATABASE_URL += '&sslmode=require'
-    else:
-        DATABASE_URL += '?sslmode=require'
-
-# Create engine
-engine = create_engine(
-    DATABASE_URL,
-    poolclass=NullPool,  # Disable pooling for now, can optimize later
-    echo=False  # Set to True for SQL query logging
-)
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=NullPool,
+        echo=False,
+        connect_args={
+            "sslmode": "require",
+            "sslcert": None,
+            "sslkey": None,
+            "sslrootcert": None
+        }
+    )
+else:
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=NullPool,
+        echo=False
+    )
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

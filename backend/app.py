@@ -51,16 +51,16 @@ def main():
     """Main entry point."""
     # Test database connection
     if not test_connection():
-        logger.error("Failed to connect to database. Exiting.")
-        return
-    
-    # Initialize database schema
-    try:
-        init_db()
-        logger.info("Database initialized successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
-        return
+        logger.error("Failed to connect to database. Starting anyway for debugging.")
+        # Don't exit - let app start so we can debug
+    else:
+        # Initialize database schema only if connection works
+        try:
+            init_db()
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize database: {e}")
+            # Continue anyway
     
     # Start background data collection scheduler
     try:
