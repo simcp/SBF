@@ -15,9 +15,7 @@ services:
       - key: API_PORT
         value: 10000
       - key: DATABASE_URL
-        fromDatabase:
-          name: hyperliquid-db
-          property: connectionString
+        value: postgresql://hyperliquid_user:3xJMUzXfHgj9O7Dm7BgjLqZDypMQ1PfP@dpg-d1i58c6r433s73b1fjkg-a.oregon-postgres.render.com/hyperliquid_tracker_xtrj
       - key: HYPERLIQUID_ENV
         value: mainnet
       - key: HYPERLIQUID_API_URL
